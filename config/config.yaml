@@ -1,0 +1,56 @@
+artifacts_root: artifacts
+
+data_sources:
+  pubchem:
+    base_url: "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+  chembl:
+    base_url: "https://www.ebi.ac.uk/chembl/api/data"
+  uniprot:
+    base_url: "https://rest.uniprot.org/uniprotkb"
+  pdb:
+    base_url: "https://data.rcsb.org/rest/v1/core"
+  tavily:
+    base_url: "https://api.tavily.com"
+  internal_kb:
+    root_dir: "data/internal_kb"
+
+vector_store:
+  provider: "qdrant"          # qdrant | pgvector | pinecone
+  host: "localhost"
+  port: 6333
+  collection_name: "partex_knowledge_base"
+  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"   # free, runs locally, no API key
+  embedding_dim: 384
+
+chunking:
+  chunk_size: 800
+  chunk_overlap: 120
+  strategy: "contextual"      # contextual | fixed | semantic
+
+retrieval:
+  top_k: 8
+  rerank_top_n: 4
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"   # free, runs locally, no API key
+
+llm:
+  provider: "groq"            # groq (free tier) | anthropic | openai
+  model_name: "llama-3.3-70b-versatile"
+  temperature: 0.2
+  max_tokens: 2000
+
+evaluation:
+  ragas_metrics:
+    - faithfulness
+    - answer_relevancy
+    - context_precision
+    - context_recall
+  judge_model: "claude-sonnet-4-6"
+  groundedness_threshold: 0.75
+
+mlflow:
+  tracking_uri: "./mlruns"    # local, free - switch to a DagsHub/hosted URI later if you want
+  experiment_name: "partex-drug-intelligence-copilot"
+
+serving:
+  host: "0.0.0.0"
+  port: 8000

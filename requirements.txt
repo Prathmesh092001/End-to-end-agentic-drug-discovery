@@ -1,0 +1,46 @@
+# Agentic orchestration
+langgraph==0.2.60
+langchain==0.3.13
+langchain-groq==0.2.3
+langchain-text-splitters==0.3.4
+# Optional - only needed if you switch llm.provider to anthropic/openai in config.yaml
+# langchain-anthropic==0.3.3
+# langchain-openai==0.2.14
+
+# MCP
+mcp==1.1.2
+
+# Web search / competitive intel (free tier: 1,000 searches/month)
+tavily-python==0.5.0
+
+# Retrieval & vector search - local, no API key
+qdrant-client==1.12.1
+langchain-huggingface==0.1.2
+sentence-transformers==3.3.1
+
+# Cheminformatics
+rdkit==2024.3.5
+
+# Evaluation
+ragas==0.2.9
+datasets==3.2.0
+
+# Serving
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+
+# LLMOps
+mlflow==2.19.0
+
+# Config / utils
+pyyaml==6.0.2
+python-box==7.3.2
+ensure==1.0.4
+httpx==0.28.1
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.4
+
+-e .

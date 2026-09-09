@@ -1,0 +1,27 @@
+AGENTS:
+  supervisor:
+    temperature: 0.0
+  profiling_agent:
+    temperature: 0.1
+  risk_agent:
+    temperature: 0.1
+  hypothesis_agent:
+    temperature: 0.4
+  competitive_intel_agent:
+    temperature: 0.2
+  critic_agent:
+    temperature: 0.0
+
+ORCHESTRATION:
+  max_turns: 8
+  recursion_limit: 25
+  parallel_specialists: true
+
+TAVILY:
+  search_depth: "advanced"
+  max_results: 5
+  include_domains: []
+
+RAGAS:
+  sample_size: 50
+  fail_below_faithfulness: 0.7
