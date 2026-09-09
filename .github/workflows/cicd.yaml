@@ -5,6 +5,7 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -37,7 +38,7 @@ jobs:
   build-and-push-ecr:
     name: Build & push Docker image to ECR
     needs: integration
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +68,7 @@ jobs:
   deploy:
     name: Deploy to EC2 (self-hosted runner)
     needs: build-and-push-ecr
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
     steps:
       - name: Pull latest image and restart container

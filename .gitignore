@@ -6,4 +6,5 @@ artifacts/
 .venv/
 *.egg-info/
 mlruns/
-.env.example/
+
+.env
