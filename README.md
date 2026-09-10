@@ -35,8 +35,8 @@ This project defaults to a fully free stack: **Groq** for the LLM,
 - only two free signups are needed.
 
 ```bash
-conda create -n partex-agent python=3.11 -y
-conda activate partex-agent
+conda create -n drug python=3.11 -y
+conda activate drug
 pip install -r requirements.txt
 cp .env.example .env
 # fill in GROQ_API_KEY (free at console.groq.com)
