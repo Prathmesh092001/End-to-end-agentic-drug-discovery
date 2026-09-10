@@ -35,7 +35,7 @@ if __name__ == "__main__":
         logger.info(f">>>>>> {STAGE_NAME_3} started <<<<<<")
         run_agent_stage(
             query="Summarize the risk and opportunity profile of this compound.",
-            compound_or_target="imatinib",
+            compound_or_target="metformin",
         )
         logger.info(f">>>>>> {STAGE_NAME_3} completed <<<<<<\n\nx==========x")
 

@@ -1,6 +1,8 @@
+import time
 from pydantic import BaseModel
 
 from partex_agent.entity import AgentConfig
+from partex_agent.logging import logger
 
 
 class BaseAgent:
@@ -46,3 +48,18 @@ class BaseAgent:
             raise ValueError(f"Unknown llm provider '{provider}'. Use groq | anthropic | openai.")
 
         self.llm = llm.with_structured_output(output_schema) if output_schema else llm
+
+    def invoke_with_retry(self, prompt: str, max_retries: int = 3, backoff_seconds: float = 2.0):
+        """Invokes the structured output LLM with retry logic on JSON parsing or validation failures."""
+        last_error = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                return self.llm.invoke(prompt)
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    f"{self.cfg.name} LLM call failed on attempt {attempt}/{max_retries}: {e}"
+                )
+                if attempt < max_retries:
+                    time.sleep(backoff_seconds * attempt)
+        raise last_error

@@ -22,11 +22,14 @@ class HypothesisOutput(BaseModel):
 
 HYPOTHESIS_SYSTEM_PROMPT = """You are Partex's hypothesis generation agent.
 Using the profiling and risk agent outputs, the target's protein context,
-and retrieved literature, propose 2-3 novel, testable research hypotheses.
-Every hypothesis must cite specific supporting evidence from what you were
-given - never invent a mechanism that isn't traceable to the provided data
-or retrieval context. Prefer hypotheses that are non-obvious but
-defensible over safe, generic statements."""
+and retrieved literature, propose 2-3 testable research hypotheses.
+
+STRICT GROUNDING & VERIFICATION CONSTRAINTS:
+1. ONLY assert target binding, off-target interactions, or mechanistic links that are explicitly present in the provided UniProt, profiling, risk, or retrieval context.
+2. DO NOT invent, extrapolate, or speculate on unverified off-target mechanisms (e.g., NQO2/QR2 binding or lysosomal sequestration) unless directly supported by the provided data.
+3. Use appropriate uncertainty qualifiers for hypotheses (e.g., "hypothesized", "potentially", "may contribute to") rather than stating unverified mechanisms as definitive facts.
+4. Attribute every hypothesis statement to specific, traceable supporting evidence present in the supplied context.
+5. Keep explanations concise and strictly verifiable against the input data."""
 
 
 class HypothesisAgent(BaseAgent):
@@ -48,6 +51,6 @@ UniProt target context: {uniprot_hits}
 Retrieved grounding context:
 {state.get('retrieval_context', 'none')}
 """
-        result: HypothesisOutput = self.llm.invoke(prompt)
+        result: HypothesisOutput = self.invoke_with_retry(prompt)
         state["hypothesis_result"] = result.model_dump()
         return state

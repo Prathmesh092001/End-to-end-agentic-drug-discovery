@@ -61,6 +61,6 @@ RDKit descriptors: {rdkit_props}
 Retrieved grounding context:
 {state.get('retrieval_context', 'none')}
 """
-        result: ProfilingOutput = self.llm.invoke(prompt)
+        result: ProfilingOutput = self.invoke_with_retry(prompt)
         state["profiling_result"] = result.model_dump()
         return state

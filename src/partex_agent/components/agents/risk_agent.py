@@ -47,6 +47,6 @@ ChEMBL activity data (truncated): {str(activity)[:3000]}
 Retrieved grounding context:
 {state.get('retrieval_context', 'none')}
 """
-        result: RiskOutput = self.llm.invoke(prompt)
+        result: RiskOutput = self.invoke_with_retry(prompt)
         state["risk_result"] = result.model_dump()
         return state

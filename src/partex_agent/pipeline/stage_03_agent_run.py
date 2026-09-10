@@ -1,3 +1,4 @@
+from pathlib import Path
 import mlflow
 
 from partex_agent.config.configuration import ConfigurationManager
@@ -23,7 +24,21 @@ def run_agent_stage(query: str, compound_or_target: str) -> dict:
         verdict = final_state.get("critic_verdict", {})
         mlflow.log_metric("groundedness_score", verdict.get("groundedness_score", 0.0))
         mlflow.log_metric("approved", int(verdict.get("approved", False)))
-        mlflow.log_text(final_state.get("final_report", ""), "final_report.md")
+        
+        final_report_content = final_state.get("final_report", "")
+        
+        # Log to MLflow artifacts
+        mlflow.log_text(final_report_content, "final_report.md")
+
+        # Save directly to local artifacts directory
+        artifacts_dir = Path("artifacts")
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        report_file = artifacts_dir / "final_report.md"
+
+        with open(report_file, "w", encoding="utf-8") as f:
+            f.write(final_report_content)
+
+        logger.info(f"Saved final report locally to {report_file}")
 
     logger.info("agent run stage complete, logged to MLflow")
     return final_state
@@ -32,6 +47,6 @@ def run_agent_stage(query: str, compound_or_target: str) -> dict:
 if __name__ == "__main__":
     result = run_agent_stage(
         query="What is the risk and opportunity profile of this compound?",
-        compound_or_target="imatinib",
+        compound_or_target="metformin",
     )
     print(result.get("final_report"))

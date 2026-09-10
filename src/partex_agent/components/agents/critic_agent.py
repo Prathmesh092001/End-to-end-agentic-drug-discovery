@@ -14,13 +14,17 @@ class CriticVerdict(BaseModel):
     required_fixes: List[str] = Field(default_factory=list)
 
 
-CRITIC_SYSTEM_PROMPT = """You are Partex's critic / evaluation agent - the
-final safety gate before a drug-intelligence report reaches a scientist.
-Check every specialist agent's output for: (1) claims not traceable to the
-provided tool data or retrieval context, (2) internal contradictions
-between agents, (3) missing uncertainty flags where data was sparse.
-Set approved=false if any specialist output contains an unsupported
-factual claim, especially about safety/toxicity. Be strict."""
+CRITIC_SYSTEM_PROMPT = """You are Partex's groundedness critic agent - the final safety gate before a drug-intelligence report reaches a scientist.
+Your job is to evaluate whether the specialist agents' claims are grounded in provided evidence.
+
+GROUNDING RULES:
+1. Valid sources of evidence include BOTH:
+   a) The internal retrieval context (RAG chunks).
+   b) Live tool execution results (PubChem, ChEMBL, UniProt, and Tavily web searches) embedded or referenced in the specialist agent outputs.
+2. If a claim (such as transporters, mechanisms, bioactivities, or market landscape) is supported by Tavily search results, PubChem properties, UniProt records, or ChEMBL assays included in the agent outputs, mark it as VALID/GROUNDED.
+3. Reject claims (set approved=false) ONLY if they are complete fabrications unsupported by either RAG context OR live tool outputs, or if there are internal contradictions between agents.
+4. Flag missing uncertainty language only where claims are speculative hypotheses presented as definitive facts without hedging.
+"""
 
 
 class CriticAgent(BaseAgent):
@@ -38,7 +42,7 @@ Hypothesis result: {state.get('hypothesis_result')}
 Competitive intel result: {state.get('competitive_intel_result')}
 Retrieval context used: {state.get('retrieval_context', 'none')}
 """
-        verdict: CriticVerdict = self.llm.invoke(prompt)
+        verdict: CriticVerdict = self.invoke_with_retry(prompt)
         state["critic_verdict"] = verdict.model_dump()
         if not verdict.approved:
             logger.warning(f"critic rejected output: {verdict.issues_found}")

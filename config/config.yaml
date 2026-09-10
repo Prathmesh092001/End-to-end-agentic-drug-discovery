@@ -36,7 +36,7 @@ llm:
   provider: "groq"            # groq (free tier) | anthropic | openai
   model_name: "openai/gpt-oss-120b"
   temperature: 0.2
-  max_tokens: 2000
+  max_tokens: 4096
 
 evaluation:
   ragas_metrics:

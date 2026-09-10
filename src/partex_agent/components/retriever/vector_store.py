@@ -1,4 +1,10 @@
+import os
 import uuid
+
+# Clean up invalid SSL_CERT_FILE paths to prevent httpx/Qdrant SSL initialization errors
+ssl_cert = os.environ.get("SSL_CERT_FILE")
+if ssl_cert and not os.path.exists(ssl_cert):
+    del os.environ["SSL_CERT_FILE"]
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
