@@ -1,3 +1,18 @@
+import os
+import platform
+import ctypes
+
+if platform.system() == "Windows":
+    try:
+        import torch
+        dll_path = os.path.join(os.path.dirname(torch.__file__), "lib", "c10.dll")
+        if os.path.exists(dll_path):
+            ctypes.CDLL(os.path.normpath(dll_path))
+    except Exception:
+        pass
+
+
+
 from partex_agent.pipeline.stage_01_ingest import run_ingestion_stage
 from partex_agent.pipeline.stage_02_index import run_indexing_stage
 from partex_agent.pipeline.stage_03_agent_run import run_agent_stage

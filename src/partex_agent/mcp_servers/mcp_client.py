@@ -7,6 +7,9 @@ stdio connection to the right MCP server and invokes the tool. This is the
 same decoupling the reference repo got from routing all component I/O
 through a ConfigurationManager - here it's routed through one MCP gateway.
 """
+
+import json
+import threading
 import asyncio
 from contextlib import AsyncExitStack
 from typing import Any
@@ -52,7 +55,24 @@ class MCPToolRegistry:
     async def call(self, server: str, tool: str, **kwargs) -> Any:
         session = await self._get_session(server)
         result = await session.call_tool(tool, arguments=kwargs)
-        return result.content
+
+        if result.isError:
+            error_text = "".join(
+                block.text for block in result.content if getattr(block, "type", None) == "text"
+            )
+            raise RuntimeError(f"MCP tool '{server}.{tool}' returned an error: {error_text}")
+
+        structured = getattr(result, "structuredContent", None)
+        if structured is not None:
+            return structured
+
+        text = "".join(
+            block.text for block in result.content if getattr(block, "type", None) == "text"
+        )
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            return text
 
     async def list_tools(self, server: str) -> list[str]:
         session = await self._get_session(server)
@@ -66,7 +86,14 @@ class MCPToolRegistry:
 # Singleton used throughout the agent layer
 registry = MCPToolRegistry()
 
+_loop = asyncio.new_event_loop()
+_loop_thread = threading.Thread(target=_loop.run_forever, daemon=True)
+_loop_thread.start()
+
 
 def call_tool_sync(server: str, tool: str, **kwargs) -> Any:
-    """Sync convenience wrapper for LangGraph nodes that aren't async."""
-    return asyncio.run(registry.call(server, tool, **kwargs))
+    """Sync convenience wrapper for LangGraph nodes that aren't async.
+    Schedules the coroutine onto the single persistent background loop instead
+    of spinning up (and tearing down) a new loop per call."""
+    future = asyncio.run_coroutine_threadsafe(registry.call(server, tool, **kwargs), _loop)
+    return future.result()
