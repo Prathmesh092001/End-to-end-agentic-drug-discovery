@@ -1,4 +1,8 @@
+import os
+import torch
+
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from partex_agent.config.configuration import ConfigurationManager
@@ -9,6 +13,15 @@ app = FastAPI(
     title="Partex Drug Asset Intelligence Copilot",
     description="Agentic GenAI API for compound profiling, risk scoring, hypothesis generation, and competitive intelligence.",
     version="0.1.0",
+)
+
+# Enable CORS for browser access from http://localhost:3000 and AWS deployments
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -47,5 +60,16 @@ def get_drug_intelligence(request: IntelligenceRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    serving_cfg = ConfigurationManager().get_serving_config()
-    uvicorn.run("app:app", host=serving_cfg.host, port=serving_cfg.port, reload=True)
+    try:
+        serving_cfg = ConfigurationManager().get_serving_config()
+        cfg_host = getattr(serving_cfg, "host", "0.0.0.0")
+        cfg_port = int(getattr(serving_cfg, "port", 8000))
+    except Exception as e:
+        logger.warning(f"Could not load serving config, defaulting to 0.0.0.0:8000. Error: {e}")
+        cfg_host = "0.0.0.0"
+        cfg_port = 8000
+
+    host = os.getenv("HOST", cfg_host)
+    port = int(os.getenv("PORT", cfg_port))
+
+    uvicorn.run("app:app", host=host, port=port, reload=True)

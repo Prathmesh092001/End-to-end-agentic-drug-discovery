@@ -1,0 +1,13 @@
+{
+  "name": "Drug-intelligence-system",
+  "version": "1.0.0",
+  "description": "Node/Express UI server for the Partex Drug Asset Intelligence Copilot - proxies to the FastAPI backend.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
