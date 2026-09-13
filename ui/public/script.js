@@ -23,7 +23,7 @@ runBtn.addEventListener("click", async () => {
 
   try {
     // Connect directly to local FastAPI instance
-    const response = await fetch("http://localhost:8000/v1/drug-intelligence", {
+    const response = await fetch("/v1/drug-intelligence", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: question, compound_or_target: compound }),

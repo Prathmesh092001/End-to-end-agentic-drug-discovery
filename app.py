@@ -3,6 +3,7 @@ import torch
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from partex_agent.config.configuration import ConfigurationManager
@@ -15,7 +16,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Enable CORS for browser access from http://localhost:3000 and AWS deployments
+# Enable CORS for browser access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -57,6 +58,10 @@ def get_drug_intelligence(request: IntelligenceRequest):
     )
 
 
+# Mount static files so http://localhost:8000 directly serves ui/public/index.html
+app.mount("/", StaticFiles(directory="ui/public", html=True), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
 
@@ -72,4 +77,18 @@ if __name__ == "__main__":
     host = os.getenv("HOST", cfg_host)
     port = int(os.getenv("PORT", cfg_port))
 
-    uvicorn.run("app:app", host=host, port=port, reload=True)
+    # reload=False prevents Uvicorn from restarting and wiping logs whenever the
+    # 7-agent pipeline writes files to logs/, artifacts/, mlruns/, or qdrant_storage/.
+    uvicorn.run(
+        "app:app",
+        host=host,
+        port=port,
+        reload=False,
+        reload_excludes=[
+            "logs/*",
+            "artifacts/*",
+            "mlruns/*",
+            "qdrant_storage/*",
+            "*.log",
+        ],
+    )

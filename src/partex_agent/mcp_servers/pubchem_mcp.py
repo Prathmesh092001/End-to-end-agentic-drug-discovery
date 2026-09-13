@@ -27,13 +27,36 @@ async def search_compound(name_or_smiles: str, by: str = "name") -> dict:
         by: one of "name", "smiles", "inchikey"
     """
     url = f"{BASE_URL}/compound/{by}/{name_or_smiles}/cids/JSON"
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        data = resp.json()
-    cids = data.get("IdentifierList", {}).get("CID", [])
-    logger.info(f"pubchem search '{name_or_smiles}' -> {len(cids)} CIDs")
-    return {"cids": cids}
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url)
+            
+            # Catch 404 (e.g., for biologics/monoclonal antibodies like pembrolizumab)
+            if resp.status_code == 404:
+                logger.warning(
+                    f"pubchem search '{name_or_smiles}' -> 404 Not Found "
+                    "(may be a biologic/antibody or unlisted compound)"
+                )
+                return {
+                    "cids": [],
+                    "status": "not_found",
+                    "message": f"'{name_or_smiles}' not found in PubChem small molecule database."
+                }
+            
+            resp.raise_for_status()
+            data = resp.json()
+
+        cids = data.get("IdentifierList", {}).get("CID", [])
+        logger.info(f"pubchem search '{name_or_smiles}' -> {len(cids)} CIDs")
+        return {"cids": cids, "status": "success"}
+
+    except Exception as e:
+        logger.error(f"Error in search_compound for '{name_or_smiles}': {e}")
+        return {
+            "cids": [],
+            "status": "error",
+            "message": f"PubChem search failed: {str(e)}"
+        }
 
 
 @mcp.tool()
@@ -44,21 +67,33 @@ async def get_compound_properties(cid: int) -> dict:
     """
     props = "MolecularWeight,XLogP,TPSA,HBondDonorCount,HBondAcceptorCount,CanonicalSMILES,IUPACName"
     url = f"{BASE_URL}/compound/cid/{cid}/property/{props}/JSON"
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        data = resp.json()
-    return data.get("PropertyTable", {}).get("Properties", [{}])[0]
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url)
+            if resp.status_code == 404:
+                return {"status": "not_found", "message": f"No properties found for CID {cid}."}
+            resp.raise_for_status()
+            data = resp.json()
+        return data.get("PropertyTable", {}).get("Properties", [{}])[0]
+    except Exception as e:
+        logger.error(f"Error in get_compound_properties for CID {cid}: {e}")
+        return {"status": "error", "message": f"Failed to fetch properties: {str(e)}"}
 
 
 @mcp.tool()
 async def get_compound_bioassay_summary(cid: int) -> dict:
     """Fetch a summary of bioassay results a compound has been tested in."""
     url = f"{BASE_URL}/compound/cid/{cid}/assaysummary/JSON"
-    async with httpx.AsyncClient(timeout=20) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        return resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.get(url)
+            if resp.status_code == 404:
+                return {"status": "not_found", "message": f"No bioassay summary found for CID {cid}."}
+            resp.raise_for_status()
+            return resp.json()
+    except Exception as e:
+        logger.error(f"Error in get_compound_bioassay_summary for CID {cid}: {e}")
+        return {"status": "error", "message": f"Failed to fetch bioassay summary: {str(e)}"}
 
 
 if __name__ == "__main__":
