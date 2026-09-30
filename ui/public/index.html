@@ -1,115 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Partex Drug Asset Intelligence Copilot</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<style>
-  :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --border: #2a2e37;
-    --text: #e8e9ec;
-    --muted: #9aa1ac;
-    --accent: #4f8cff;
-    --ok: #2fbf71;
-    --warn: #d9a441;
-    --err: #e05d5d;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-  }
-  .container { width: 100%; max-width: 720px; }
-  h1 { font-size: 1.6rem; margin-bottom: 4px; }
-  .subtitle { color: var(--muted); margin-bottom: 28px; font-size: 0.95rem; }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-  }
-  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
-  label:first-child { margin-top: 0; }
-  input[type="text"], textarea {
-    width: 100%;
-    background: #0f1115;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 10px 12px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    resize: vertical;
-  }
-  input[type="text"]:focus, textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  button {
-    margin-top: 20px;
-    width: 100%;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  #status { margin-top: 20px; font-size: 0.9rem; }
-  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
-  .badge.ok { background: rgba(47,191,113,0.15); color: var(--ok); }
-  .badge.warn { background: rgba(217,164,65,0.15); color: var(--warn); }
-  .error-text { color: var(--err); }
-  #report {
-    margin-top: 20px;
-    background: #0f1115;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    line-height: 1.6;
-    display: none;
-  }
-  #report h1, #report h2 { color: var(--accent); }
-  .spinner {
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-right: 8px;
-    vertical-align: middle;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#061321" />
+  <meta name="description" content="Partex Drug Asset Intelligence Copilot — evidence-grounded multi-agent drug discovery research workspace." />
+  <title>Partex Drug Asset Intelligence Copilot</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
-  <div class="container">
-    <h1>Partex Drug Asset Intelligence Copilot</h1>
-    <p class="subtitle">Profiling &middot; Risk scoring &middot; Hypothesis generation &middot; Competitive intelligence &mdash; grounded and critic-reviewed.</p>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="molecule-field" aria-hidden="true">
+    <span class="node n1"></span><span class="node n2"></span><span class="node n3"></span>
+    <span class="node n4"></span><span class="node n5"></span><span class="node n6"></span>
+    <i class="bond b1"></i><i class="bond b2"></i><i class="bond b3"></i>
+  </div>
 
-    <div class="panel">
-      <label for="compound">Compound or target</label>
-      <input type="text" id="compound" placeholder="e.g. imatinib, metformin, KRAS" />
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">⌬</div>
+      <div>
+        <div class="brand-title">Partex Drug Asset Intelligence Copilot</div>
+        <div class="brand-subtitle">From insight to impact · AI-powered drug discovery &amp; asset intelligence</div>
+      </div>
+    </div>
 
-      <label for="question">What do you want to know?</label>
-      <textarea id="question" rows="3">Summarize the risk and opportunity profile of this compound.</textarea>
+    <div class="top-status">
+      <div class="status-pill"><span class="live-dot"></span><span>Research Copilot</span><b id="copilotStatus">Online</b></div>
+      <div class="status-pill"><span class="health-dot"></span><span>API</span><b id="apiStatus">Checking</b></div>
+      <button class="icon-button" id="settingsBtn" title="Settings">⚙</button>
+    </div>
+  </header>
 
-      <button id="runBtn">Run analysis</button>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <button class="nav-item active" data-scroll="research">
+        <span>⌂</span><strong>New Research</strong>
+      </button>
+      <button class="nav-item" data-scroll="history"><span>◷</span><strong>History</strong></button>
+      <button class="nav-item" data-scroll="results"><span>◎</span><strong>Saved Targets</strong></button>
+      <button class="nav-item" data-scroll="results"><span>▤</span><strong>Saved Reports</strong></button>
 
-      <div id="status"></div>
-      <div id="report"></div>
+      <div class="side-divider"></div>
+      <div class="side-label">SUPPORTED SOURCES</div>
+
+      <div class="source-mini"><span class="source-icon">P</span><div><b>PubMed</b><small>Literature</small></div><em></em></div>
+      <div class="source-mini"><span class="source-icon">U</span><div><b>UniProt</b><small>Proteins</small></div><em></em></div>
+      <div class="source-mini"><span class="source-icon">C</span><div><b>ChEMBL</b><small>Compounds</small></div><em></em></div>
+      <div class="source-mini"><span class="source-icon">P</span><div><b>PubChem</b><small>Chemical data</small></div><em></em></div>
+      <div class="source-mini"><span class="source-icon">R</span><div><b>RCSB PDB</b><small>Structures</small></div><em></em></div>
+      <div class="source-mini"><span class="source-icon">T</span><div><b>Tavily</b><small>Web intelligence</small></div><em></em></div>
+
+      <div class="sidebar-bottom">
+        <div class="side-motto">AI agents + scientific knowledge<br><b>= better research decisions</b></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section class="research-hero glass-card" id="research">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">RESEARCH WORKSPACE</span>
+            <h1>Start a New Research</h1>
+            <p>Ask a scientific question. The multi-agent pipeline retrieves, profiles, evaluates, challenges and synthesizes evidence.</p>
+          </div>
+          <div class="research-badge">7-agent architecture</div>
+        </div>
+
+        <div class="query-grid">
+          <div class="query-box">
+            <textarea id="question" rows="4" spellcheck="true">Analyze EGFR T790M as a therapeutic target and identify promising inhibitor strategies, including target biology, mechanism of resistance, known compounds, potency evidence, ADMET considerations, structural context, and competitive landscape. Ground each major conclusion in available scientific evidence.</textarea>
+            <div class="query-footer">
+              <div class="chips">
+                <button class="chip active-chip" data-target="EGFR">EGFR</button>
+                <button class="chip" data-target="T790M">T790M</button>
+                <button class="chip" data-target="NSCLC">NSCLC</button>
+                <button class="chip add-chip" id="addEntity">＋ Add entity</button>
+              </div>
+              <span id="charCount">0 chars</span>
+            </div>
+          </div>
+
+          <div class="target-box">
+            <label for="compound">PRIMARY TARGET / COMPOUND</label>
+            <div class="target-input-wrap">
+              <span>⌬</span>
+              <input id="compound" value="EGFR" placeholder="e.g. EGFR, KRAS, imatinib" />
+            </div>
+            <div class="target-meta">
+              <span class="target-dot"></span>
+              <span>Entity will be analyzed across connected evidence sources</span>
+            </div>
+            <button class="run-button" id="runBtn">
+              <span class="run-icon">✦</span>
+              <span>Run Intelligence</span>
+              <span class="arrow">→</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="template-row">
+          <span class="template-label">QUICK RESEARCH</span>
+          <button class="template" data-template="target">Target intelligence</button>
+          <button class="template" data-template="compound">Compound intelligence</button>
+          <button class="template" data-template="resistance">Resistance analysis</button>
+          <button class="template" data-template="competitive">Competitive landscape</button>
+          <button class="template" data-template="literature">Literature review</button>
+        </div>
+      </section>
+
+      <section class="glass-card orchestration">
+        <div class="section-heading compact">
+          <div>
+            <span class="eyebrow">AGENTIC EXECUTION</span>
+            <h2>Multi-Agent Orchestration</h2>
+            <p>LangGraph supervisor coordinating specialized research agents.</p>
+          </div>
+          <div class="execution-state" id="executionState"><span class="state-dot"></span> Ready</div>
+        </div>
+
+        <div class="agent-flow" id="agentFlow">
+          <div class="agent-card active" data-agent="supervisor"><div class="agent-icon">◈</div><b>Supervisor</b><small>Planning &amp; coordination</small><span class="agent-status">Ready</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="retrieval"><div class="agent-icon">⌕</div><b>Retrieval</b><small>Search &amp; gather</small><span class="agent-status">Waiting</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="profiling"><div class="agent-icon">⌬</div><b>Profiling</b><small>Target &amp; compound</small><span class="agent-status">Waiting</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="risk"><div class="agent-icon">◉</div><b>Risk scoring</b><small>ADMET &amp; safety</small><span class="agent-status">Waiting</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="hypothesis"><div class="agent-icon">✧</div><b>Hypothesis</b><small>Generate insights</small><span class="agent-status">Waiting</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="competitive"><div class="agent-icon">◌</div><b>Competitive intel</b><small>Market intelligence</small><span class="agent-status">Waiting</span></div>
+          <span class="flow-arrow">→</span>
+          <div class="agent-card" data-agent="critic"><div class="agent-icon">✓</div><b>Critic</b><small>Validate &amp; refine</small><span class="agent-status">Waiting</span></div>
+        </div>
+
+        <div class="source-strip">
+          <span class="strip-title">DATA SOURCES</span>
+          <span>◉ PubMed <small>Literature</small></span>
+          <span>◉ UniProt <small>Proteins</small></span>
+          <span>◉ ChEMBL <small>Bioactivity</small></span>
+          <span>◉ PubChem <small>Chemical data</small></span>
+          <span>◉ RCSB PDB <small>Structures</small></span>
+          <span>◉ Tavily <small>Web intelligence</small></span>
+        </div>
+      </section>
+
+      <section class="results-section" id="results">
+        <div class="results-tabs">
+          <button class="result-tab active" data-tab="resultsTab">Research Results</button>
+          <button class="result-tab" data-tab="traceTab">Research Trace</button>
+          <button class="result-tab" data-tab="evidenceTab">Evidence &amp; Citations</button>
+        </div>
+
+        <div class="tab-panel active" id="resultsTab">
+          <div class="results-grid">
+            <article class="result-card synthesis-card">
+              <div class="card-title"><span class="card-icon">▤</span><div><b>Executive Research Synthesis</b><small>AI-generated evidence-backed summary</small></div></div>
+              <div id="report" class="report"><div class="empty-state">Run a research query to generate the scientific synthesis.</div></div>
+              <div class="metric-row">
+                <div class="metric"><span>◌</span><div><small>Groundedness</small><b id="groundedness">—</b></div></div>
+                <div class="metric"><span>✓</span><div><small>Critic review</small><b id="approval">Awaiting</b></div></div>
+                <div class="metric"><span>⌁</span><div><small>Research state</small><b id="resultState">Ready</b></div></div>
+              </div>
+            </article>
+
+            <article class="result-card insights-card">
+              <div class="card-title"><span class="card-icon">✦</span><div><b>Quick Insights</b><small>Signals extracted from the report</small></div></div>
+              <ul id="insightsList" class="insight-list">
+                <li>Target biology will appear here.</li>
+                <li>Compound and potency signals will appear here.</li>
+                <li>Risk and ADMET observations will appear here.</li>
+                <li>Competitive and literature signals will appear here.</li>
+              </ul>
+            </article>
+
+            <article class="result-card landscape-card">
+              <div class="card-title"><span class="card-icon">⌬</span><div><b>Target · Compound Landscape</b><small>Research context</small></div></div>
+              <div class="molecule-visual">
+                <div class="protein-orb"><span></span><span></span><span></span><span></span></div>
+                <div class="visual-label"><b id="visualTarget">EGFR</b><small>Target context</small></div>
+              </div>
+              <div class="relationship"><span>Target</span><i>↔</i><span>Compounds</span><i>↔</i><span>Evidence</span></div>
+            </article>
+          </div>
+
+          <div class="detail-grid">
+            <article class="detail-card">
+              <div class="detail-head"><span>⌬</span><b>Target Biology</b></div>
+              <div class="detail-content">
+                <div><small>Target</small><strong id="biologyTarget">EGFR</strong></div>
+                <div><small>Mutation / context</small><strong id="biologyMutation">T790M</strong></div>
+                <div><small>Pathway</small><strong>Signal transduction</strong></div>
+              </div>
+              <button class="text-button">View full details →</button>
+            </article>
+
+            <article class="detail-card">
+              <div class="detail-head"><span>◇</span><b>Compound Intelligence</b></div>
+              <div class="compound-table">
+                <div class="table-row header"><span>Candidate</span><span>Potency</span><span>Evidence</span></div>
+                <div class="table-row"><span>Detected from report</span><span>—</span><em>Pending</em></div>
+                <div class="table-row"><span>Additional candidates</span><span>—</span><em>Pending</em></div>
+              </div>
+              <button class="text-button">View compounds →</button>
+            </article>
+
+            <article class="detail-card">
+              <div class="detail-head"><span>◉</span><b>Risk &amp; ADMET</b></div>
+              <ul class="check-list">
+                <li>ADMET signals will be extracted from the analysis.</li>
+                <li>Potential liabilities will be highlighted.</li>
+                <li>Evidence gaps will remain visible.</li>
+              </ul>
+              <button class="text-button">View ADMET analysis →</button>
+            </article>
+
+            <article class="detail-card">
+              <div class="detail-head"><span>◌</span><b>Competitive Landscape</b></div>
+              <div class="competition-placeholder">
+                <div class="mini-bars"><i></i><i></i><i></i><i></i></div>
+                <p>Competitive intelligence will be summarized from the returned research report.</p>
+              </div>
+              <button class="text-button">View full analysis →</button>
+            </article>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="traceTab">
+          <div class="trace-card">
+            <div class="card-title"><span class="card-icon">◷</span><div><b>Research Execution Trace</b><small>Client-side execution visualization for the current request</small></div></div>
+            <div id="traceList" class="trace-list">
+              <div class="trace-empty">No research run yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="evidenceTab">
+          <div class="evidence-grid">
+            <div class="evidence-card"><span class="source-big">P</span><b>PubMed</b><small>Scientific literature</small><strong>Connected</strong></div>
+            <div class="evidence-card"><span class="source-big">U</span><b>UniProt</b><small>Protein knowledge</small><strong>Connected</strong></div>
+            <div class="evidence-card"><span class="source-big">C</span><b>ChEMBL</b><small>Bioactivity data</small><strong>Connected</strong></div>
+            <div class="evidence-card"><span class="source-big">P</span><b>PubChem</b><small>Chemical intelligence</small><strong>Connected</strong></div>
+            <div class="evidence-card"><span class="source-big">R</span><b>RCSB PDB</b><small>Structural biology</small><strong>Connected</strong></div>
+            <div class="evidence-card"><span class="source-big">T</span><b>Tavily</b><small>Web intelligence</small><strong>Connected</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="history-section glass-card" id="history">
+        <div class="section-heading compact">
+          <div><span class="eyebrow">RESEARCH MEMORY</span><h2>Recent Research</h2></div>
+          <button class="ghost-button" id="clearHistory">Clear local history</button>
+        </div>
+        <div id="historyList" class="history-list">
+          <div class="history-empty">Your recent research runs will appear here in this browser.</div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="right-rail">
+      <section class="rail-card">
+        <div class="rail-title"><b>Research History</b><button id="viewHistory">View all →</button></div>
+        <div id="railHistory" class="rail-history">
+          <div class="rail-item selected"><span class="rail-line"></span><div><b>EGFR T790M research</b><small>Current workspace</small></div><em>Ready</em></div>
+          <div class="rail-item"><span class="rail-line"></span><div><b>KRAS target intelligence</b><small>Previous session</small></div><em>Local</em></div>
+          <div class="rail-item"><span class="rail-line"></span><div><b>Compound risk analysis</b><small>Previous session</small></div><em>Local</em></div>
+        </div>
+      </section>
+
+      <section class="rail-card">
+        <div class="rail-title"><b>System Status</b></div>
+        <div class="system-row"><span class="health-dot"></span><span>Frontend</span><b>Online</b></div>
+        <div class="system-row"><span class="health-dot"></span><span>FastAPI</span><b id="railApi">Checking</b></div>
+        <div class="system-row"><span class="health-dot"></span><span>Agent Pipeline</span><b>Ready</b></div>
+        <div class="system-row"><span class="health-dot"></span><span>Evidence Layer</span><b>Connected</b></div>
+      </section>
+
+      <section class="rail-card promo-card">
+        <div class="dna-art">⌬</div>
+        <span class="eyebrow">SCIENTIFIC AI</span>
+        <h3>Smarter research.<br>Faster discovery.</h3>
+        <p>Explore biological context, compounds, evidence and competitive signals through a transparent multi-agent workflow.</p>
+      </section>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal" id="settingsModal" aria-hidden="true">
+    <div class="modal-box">
+      <button class="modal-close" id="closeSettings">×</button>
+      <span class="eyebrow">SETTINGS</span>
+      <h2>Research Workspace</h2>
+      <p>The frontend uses your existing FastAPI endpoint and does not change the agent pipeline.</p>
+      <label>API endpoint</label>
+      <input id="apiEndpoint" type="text" />
+      <button class="run-button small-run" id="saveSettings">Save endpoint</button>
     </div>
   </div>
 

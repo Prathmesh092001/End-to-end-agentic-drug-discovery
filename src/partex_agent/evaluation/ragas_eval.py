@@ -1,7 +1,14 @@
+from typing import Any, Dict, Optional
+import numpy as np
 import pandas as pd
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+from ragas.metrics import (
+    answer_relevancy,
+    context_precision,
+    context_recall,
+    faithfulness,
+)
 
 from partex_agent.entity import EvaluationConfig
 from partex_agent.logging import logger
@@ -15,32 +22,85 @@ METRIC_MAP = {
 
 
 class RagasEvaluator:
-    """
-    Runs the RAGAS suite over a benchmark of (question, ground_truth,
-    retrieved_contexts, generated_answer) rows. This is the automated
-    gate that runs in CI before a prompt/config change ships - if
-    faithfulness drops below the configured threshold, the pipeline fails.
+    """Runs RAGAS evaluation over benchmark data (question, ground_truth,
+
+    contexts, answer). Serves as an automated quality gate in CI/CD.
     """
 
-    def __init__(self, cfg: EvaluationConfig):
+    def __init__(
+        self,
+        cfg: EvaluationConfig,
+        evaluator_llm: Optional[Any] = None,
+        evaluator_embeddings: Optional[Any] = None,
+    ):
         self.cfg = cfg
         self.metrics = [METRIC_MAP[m] for m in cfg.ragas_metrics if m in METRIC_MAP]
+        self.evaluator_llm = evaluator_llm
+        self.evaluator_embeddings = evaluator_embeddings
 
-    def evaluate_dataframe(self, df: pd.DataFrame) -> dict:
+    def _sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Validates columns and ensures 'contexts' is always list[str] for RAGAS."""
         required_cols = {"question", "answer", "contexts", "ground_truth"}
         missing = required_cols - set(df.columns)
         if missing:
             raise ValueError(f"Benchmark dataframe missing columns: {missing}")
 
-        dataset = Dataset.from_pandas(df)
-        result = evaluate(dataset, metrics=self.metrics)
-        scores = result.to_pandas().mean(numeric_only=True).to_dict()
-        logger.info(f"RAGAS scores: {scores}")
+        formatted_df = df.copy()
 
-        faithfulness_score = scores.get("faithfulness", 1.0)
+        # Fix contexts column to ensure it is list[str] across all rows
+        def _normalize_context(val):
+            if isinstance(val, list):
+                return [str(item) for item in val if item is not None]
+            if pd.isna(val) or val is None:
+                return ["No retrieval context provided."]
+            return [str(val)]
+
+        formatted_df["contexts"] = formatted_df["contexts"].apply(_normalize_context)
+        formatted_df["ground_truth"] = formatted_df["ground_truth"].apply(
+            lambda g: [str(g)] if isinstance(g, str) else list(g)
+        )
+
+        return formatted_df
+
+    def evaluate_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Evaluates pipeline outputs against ground truth with RAGAS metrics."""
+        formatted_df = self._sanitize_dataframe(df)
+        dataset = Dataset.from_pandas(formatted_df)
+
+        logger.info(f"Evaluating {len(formatted_df)} queries with RAGAS...")
+
+        # Run evaluation with explicit LLM judge overrides
+        result = evaluate(
+            dataset=dataset,
+            metrics=self.metrics,
+            llm=self.evaluator_llm,
+            embeddings=self.evaluator_embeddings,
+            raise_exceptions=False,
+        )
+
+        result_df = result.to_pandas()
+
+        # Extract numeric mean scores while handling NaNs
+        scores = {}
+        for col in result_df.columns:
+            if col in METRIC_MAP:
+                mean_val = result_df[col].dropna().mean()
+                scores[col] = float(mean_val) if not np.isnan(mean_val) else 0.0
+
+        logger.info(f"RAGAS evaluation complete. Scores: {scores}")
+
+        # Check CI gate (faithfulness threshold)
+        faithfulness_score = scores.get("faithfulness", 0.0)
         passed = faithfulness_score >= self.cfg.groundedness_threshold
+
         if not passed:
             logger.warning(
-                f"faithfulness {faithfulness_score} below threshold {self.cfg.groundedness_threshold}"
+                f"Evaluation Gate Failed: faithfulness {faithfulness_score:.3f} "
+                f"below required threshold {self.cfg.groundedness_threshold:.3f}"
             )
-        return {"scores": scores, "passed": passed}
+
+        return {
+            "scores": scores,
+            "passed": passed,
+            "detailed_results": result_df.to_dict(orient="records"),
+        }
